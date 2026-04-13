@@ -7,7 +7,7 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: 'https://accurate-vacuum-pediatric-health.trycloudflare.com',
+        target: 'https://accurate-vacuum-pediatric-health.trycloudflare.com/',
         changeOrigin: true,
       },
     },
