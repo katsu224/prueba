@@ -61,11 +61,24 @@ app = FastAPI(
 )
 
 
+# Forzar asegurarse que origins sea una lista, por si acaso pydantic lo cargó como string
+cors_origins = settings.CORS_ORIGINS
+if isinstance(cors_origins, str):
+    import json
+    try:
+        cors_origins = json.loads(cors_origins)
+    except:
+        cors_origins = [x.strip() for x in cors_origins.split(",")]
+
+# Asegurar explícitamente el origen de Vercel
+if "https://prueba-black-chi.vercel.app" not in cors_origins:
+    cors_origins.append("https://prueba-black-chi.vercel.app")
+
 # --- Middleware CORS ---
 # Permite que el frontend de React se comunique con este backend.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

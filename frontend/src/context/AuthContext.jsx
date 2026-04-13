@@ -23,11 +23,18 @@ export function AuthProvider({ children }) {
         .then(userData => {
           setUser(userData);
         })
-        .catch(() => {
-          // Token inválido o expirado, limpiar sesión
-          localStorage.removeItem('token');
-          setToken(null);
-          setUser(null);
+        .catch((err) => {
+          // Evitar cerrar sesión si es un error de red o de Vercel (404/403)
+          if (err.response && err.response.status === 401) {
+            // Token inválido o expirado, limpiar sesión
+            localStorage.removeItem('token');
+            setToken(null);
+            setUser(null);
+          } else {
+            console.error("Error al obtener usuario:", err);
+            // Podrías decidir no borrar la sesión en caso de error de red
+            // Sin embargo, sin usuario la UI puede fallar. Dejamos el token intacto.
+          }
         })
         .finally(() => setLoading(false));
     } else {

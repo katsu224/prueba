@@ -8,8 +8,10 @@
  */
 import axios from 'axios';
 
-// Base URL del backend FastAPI
-const API_BASE = '/api/v1';
+// Base URL del backend FastAPI.
+// Usa la variable de entorno si existe (para producción en Vercel),
+// de lo contrario usa el proxy local de Vite o path relativo.
+const API_BASE = import.meta.env.VITE_API_URL || '/api/v1';
 
 const client = axios.create({
   baseURL: API_BASE,
