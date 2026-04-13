@@ -22,7 +22,13 @@ Uso:
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import AuthenticationError, DuplicateError
-from app.core.security import create_access_token, hash_password, verify_password
+from app.core.security import (
+    create_access_token, 
+    create_refresh_token, 
+    hash_password, 
+    verify_password,
+    verify_refresh_token
+)
 from app.models.user import User
 from app.repositories.user_repository import UserRepository
 from app.schemas.user import UserCreate, TokenResponse, UserResponse
@@ -117,11 +123,38 @@ class AuthService:
         if not user.is_active:
             raise AuthenticationError("Usuario desactivado")
 
-        # Generar token JWT con el user_id en el campo "sub"
+        # Generar tokens JWT con el user_id en el campo "sub"
         access_token = create_access_token(data={"sub": str(user.id)})
+        refresh_token = create_refresh_token(data={"sub": str(user.id)})
 
         return TokenResponse(
             access_token=access_token,
+            refresh_token=refresh_token,
+            token_type="bearer",
+            user=UserResponse.model_validate(user),
+        )
+
+    async def refresh_token(self, refresh_token: str) -> TokenResponse:
+        """
+        Renueva el access token usando un refresh token válido.
+        """
+        from uuid import UUID
+        user_id = verify_refresh_token(refresh_token)
+        
+        if not user_id:
+            raise AuthenticationError("Refresh token inválido")
+            
+        user = await self.user_repo.get_by_id(UUID(user_id))
+        
+        if not user or not user.is_active:
+            raise AuthenticationError("Usuario no encontrado o inactivo")
+            
+        access_token = create_access_token(data={"sub": str(user.id)})
+        new_refresh_token = create_refresh_token(data={"sub": str(user.id)})
+        
+        return TokenResponse(
+            access_token=access_token,
+            refresh_token=new_refresh_token,
             token_type="bearer",
             user=UserResponse.model_validate(user),
         )

@@ -84,3 +84,22 @@ async def get_me(
     Requiere token JWT válido.
     """
     return UserResponse.model_validate(current_user)
+
+
+from app.schemas.user import RefreshTokenRequest
+
+@router.post(
+    "/refresh",
+    response_model=TokenResponse,
+    summary="Renovar token de acceso",
+    description="Genera un nuevo par de tokens usando un refresh token válido.",
+)
+async def refresh_token(
+    data: RefreshTokenRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Renueva la sesión devolviendo un nuevo access token y refresh token.
+    """
+    auth_service = AuthService(db)
+    return await auth_service.refresh_token(data.refresh_token)

@@ -103,7 +103,32 @@ def create_access_token(
             minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
         )
 
-    to_encode.update({"exp": expire})
+    to_encode.update({"exp": expire, "type": "access"})
+    encoded_jwt = jwt.encode(
+        to_encode,
+        settings.SECRET_KEY,
+        algorithm=settings.ALGORITHM,
+    )
+    return encoded_jwt
+
+
+def create_refresh_token(
+    data: dict,
+    expires_delta: Optional[timedelta] = None
+) -> str:
+    """
+    Crea un token JWT de refresco firmado con la clave secreta.
+    """
+    to_encode = data.copy()
+
+    if expires_delta:
+        expire = datetime.now(timezone.utc) + expires_delta
+    else:
+        expire = datetime.now(timezone.utc) + timedelta(
+            days=settings.REFRESH_TOKEN_EXPIRE_DAYS
+        )
+
+    to_encode.update({"exp": expire, "type": "refresh"})
     encoded_jwt = jwt.encode(
         to_encode,
         settings.SECRET_KEY,
@@ -131,12 +156,42 @@ def decode_access_token(token: str) -> dict:
             settings.SECRET_KEY,
             algorithms=[settings.ALGORITHM],
         )
+        if payload.get("type") != "access":
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Token no es de acceso",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
         return payload
     except JWTError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token inválido o expirado",
             headers={"WWW-Authenticate": "Bearer"},
+        )
+
+
+def verify_refresh_token(token: str) -> str:
+    """
+    Decodifica y valida un token JWT de refresco.
+    Retorna el ID del usuario.
+    """
+    try:
+        payload = jwt.decode(
+            token,
+            settings.SECRET_KEY,
+            algorithms=[settings.ALGORITHM],
+        )
+        if payload.get("type") != "refresh":
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Token no es de refresco"
+            )
+        return payload.get("sub")
+    except JWTError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Refresh token inválido o expirado"
         )
 
 

@@ -28,6 +28,7 @@ export function AuthProvider({ children }) {
           if (err.response && err.response.status === 401) {
             // Token inválido o expirado, limpiar sesión
             localStorage.removeItem('token');
+            localStorage.removeItem('refresh_token');
             setToken(null);
             setUser(null);
           } else {
@@ -46,6 +47,7 @@ export function AuthProvider({ children }) {
   const login = async (username, password) => {
     const data = await authApi.login(username, password);
     localStorage.setItem('token', data.access_token);
+    localStorage.setItem('refresh_token', data.refresh_token);
     setToken(data.access_token);
     setUser(data.user);
     return data;
@@ -59,6 +61,7 @@ export function AuthProvider({ children }) {
   /** Cierra la sesión */
   const logout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('refresh_token');
     setToken(null);
     setUser(null);
   };

@@ -95,6 +95,10 @@ class TokenResponse(BaseModel):
         ...,
         description="Token JWT de acceso",
     )
+    refresh_token: str = Field(
+        ...,
+        description="Token JWT de refresco",
+    )
     token_type: str = Field(
         default="bearer",
         description="Tipo de token (siempre 'bearer')",
@@ -102,4 +106,14 @@ class TokenResponse(BaseModel):
     user: UserResponse = Field(
         ...,
         description="Datos del usuario autenticado",
+    )
+
+
+class RefreshTokenRequest(BaseModel):
+    """
+    Schema para solicitar un nuevo Access Token.
+    """
+    refresh_token: str = Field(
+        ...,
+        description="Token de refresco válido",
     )
